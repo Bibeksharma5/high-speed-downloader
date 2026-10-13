@@ -64,6 +64,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                     _("High Speed Downloader..."),
                     _("Download YouTube videos and playlists in high speed")
                 )
+                gui.mainFrame.sysTrayIcon.Bind(wx.EVT_MENU, self.on_menu_open, self.menu_item)
                 gui.mainFrame.Bind(wx.EVT_MENU, self.on_menu_open, self.menu_item)
             except Exception:
                 self.menu_item = None
@@ -76,7 +77,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         self.open_downloader()
 
     def on_menu_open(self, evt):
-        self.open_downloader()
+        wx.CallAfter(self.open_downloader)
 
     def open_downloader(self):
         parent = gui.mainFrame if HAS_NVDA_CORE and hasattr(gui, "mainFrame") else None
@@ -91,6 +92,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 pass
 
             if self.tools_menu and self.menu_item:
+                try:
+                    gui.mainFrame.sysTrayIcon.Unbind(wx.EVT_MENU, source=self.menu_item)
+                except Exception:
+                    pass
+                try:
+                    gui.mainFrame.Unbind(wx.EVT_MENU, source=self.menu_item)
+                except Exception:
+                    pass
                 try:
                     self.tools_menu.Remove(self.menu_item)
                 except Exception:

@@ -202,6 +202,7 @@ class DownloadManager:
         self.on_item_updated = on_item_updated
         self.on_overall_progress = on_overall_progress
         self.on_all_completed = on_all_completed
+        self._all_completed_notified = True
 
     def has_active_downloads(self) -> bool:
         with self._lock:
@@ -239,6 +240,7 @@ class DownloadManager:
             )
             self._next_id += 1
             self.items.append(item)
+            self._all_completed_notified = False
 
         if not self._executor:
             self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
@@ -271,6 +273,7 @@ class DownloadManager:
                 self._next_id += 1
                 self.items.append(item)
                 created.append(item)
+            self._all_completed_notified = False
 
         if not self._executor:
             self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
@@ -296,6 +299,7 @@ class DownloadManager:
             for item in list(self.items):
                 item.cancel()
             self.items.clear()
+            self._all_completed_notified = True
             if self._executor:
                 self._executor.shutdown(wait=False, cancel_futures=True)
                 self._executor = None
@@ -522,7 +526,12 @@ class DownloadManager:
             self.on_overall_progress(pct)
 
     def _check_all_finished(self):
+        should_notify = False
         with self._lock:
             active = any(i.status in ("Queued", "Downloading") for i in self.items)
-        if not active and self.on_all_completed:
+            completed_any = any(i.status == "Completed" for i in self.items)
+            if not active and completed_any and not self._all_completed_notified:
+                self._all_completed_notified = True
+                should_notify = True
+        if should_notify and self.on_all_completed:
             self.on_all_completed()

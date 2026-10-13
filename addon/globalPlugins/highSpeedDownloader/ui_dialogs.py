@@ -481,10 +481,25 @@ class HighSpeedDownloaderDialog(wx.Dialog):
         wx.CallAfter(self._safe_all_completed)
 
     def _safe_all_completed(self):
-        if self.IsBeingDeleted():
-            return
-        self.gauge.SetValue(100)
-        self.update_action_button()
+        parent = None
+        if not self.IsBeingDeleted():
+            self.gauge.SetValue(100)
+            self.cancel_all_btn.Enable(False)
+            self.update_action_button()
+            parent = self
+        else:
+            try:
+                import gui
+                parent = gui.mainFrame
+            except Exception:
+                parent = None
+
+        wx.MessageBox(
+            _("The download has been completed."),
+            _("Download Complete"),
+            wx.OK | wx.ICON_INFORMATION,
+            parent
+        )
 
     def get_selected_download_item(self) -> tuple:
         """Returns (row_index, DownloadItem or None)"""
