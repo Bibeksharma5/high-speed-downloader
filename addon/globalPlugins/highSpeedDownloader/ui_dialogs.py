@@ -44,17 +44,23 @@ def get_download_manager():
     return _global_download_mgr
 
 
+try:
+    from gui.nvdaControls import CustomCheckListBox
+except Exception:
+    CustomCheckListBox = wx.CheckListBox
+
+
 class PlaylistVideosDialog(wx.Dialog):
     """
-    Dialog displaying checkboxes for all videos in a playlist.
-    All videos are checked by default. Clicking Continue proceeds with download.
+    Dialog displaying a list where the checkboxes are kept for all videos in a playlist.
+    All checkboxes are checked by default. Clicking Continue proceeds with download.
     """
     def __init__(self, parent, playlist_title: str, entries: list):
         super().__init__(
             parent,
             title=_("Choose Videos to Download - {title}").format(title=playlist_title),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.STAY_ON_TOP,
-            size=(550, 420)
+            size=(580, 460)
         )
         self.entries = entries
 
@@ -66,19 +72,23 @@ class PlaylistVideosDialog(wx.Dialog):
         )
         main_sizer.Add(prompt_lbl, flag=wx.ALL, border=10)
 
-        choices = [f"{idx + 1}. {e['title']}" for idx, e in enumerate(entries)]
-        self.check_list = wx.CheckListBox(
+        # List where checkboxes are kept
+        choices = [f"{idx + 1}. {e.get('title') or f'Video {idx + 1}'}" for idx, e in enumerate(entries)]
+        self.check_list = CustomCheckListBox(
             self,
             choices=choices,
             style=wx.LB_SINGLE | wx.LB_HSCROLL
         )
         main_sizer.Add(self.check_list, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=10)
 
-        # By default, all videos must be checked
+        # By default, all checkboxes are checked
         for i in range(len(entries)):
             self.check_list.Check(i, True)
 
-        # Quick select buttons
+        if entries:
+            self.check_list.SetSelection(0)
+
+        # Quick select buttons: Select All, Unselect All
         quick_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.select_all_btn = wx.Button(self, label=_("Select &All"))
         self.select_all_btn.Bind(wx.EVT_BUTTON, self.on_select_all)
@@ -103,6 +113,8 @@ class PlaylistVideosDialog(wx.Dialog):
 
         self.SetSizer(main_sizer)
         self.CentreOnParent()
+
+        wx.CallAfter(self.check_list.SetFocus)
 
     def on_select_all(self, evt):
         for i in range(len(self.entries)):
@@ -172,8 +184,11 @@ class HighSpeedDownloaderDialog(wx.Dialog):
 
     @classmethod
     def open_dialog(cls, parent=None):
+        mgr = get_download_manager()
+        mgr.cleanup_non_active()
         if cls._instance is not None:
             try:
+                cls._instance._populate_existing_downloads()
                 cls._instance.Raise()
                 cls._instance.SetFocus()
                 cls._instance.Show()
@@ -194,6 +209,7 @@ class HighSpeedDownloaderDialog(wx.Dialog):
             size=(640, 560)
         )
         self.download_mgr = get_download_manager()
+        self.download_mgr.cleanup_non_active()
 
         # Connect download manager callbacks
         self.download_mgr.on_item_updated = self._on_item_updated_async
@@ -295,6 +311,7 @@ class HighSpeedDownloaderDialog(wx.Dialog):
 
         self.cancel_all_btn = wx.Button(self, label=_("Cancel &all downloads"))
         self.cancel_all_btn.Bind(wx.EVT_BUTTON, self.on_cancel_all_clicked)
+        self.cancel_all_btn.Enable(False)
         actions_sizer.Add(self.cancel_all_btn, flag=wx.RIGHT, border=5)
 
         actions_sizer.AddStretchSpacer()
@@ -371,6 +388,10 @@ class HighSpeedDownloaderDialog(wx.Dialog):
                         quality=quality,
                         output_dir=out_dir
                     )
+                    if self.downloads_list.GetItemCount() > 0:
+                        self.downloads_list.Select(0)
+                        self.downloads_list.Focus(0)
+                    self.update_action_button()
                 else:
                     ui.message(_("No videos selected from playlist."))
             dlg.Destroy()
@@ -385,11 +406,21 @@ class HighSpeedDownloaderDialog(wx.Dialog):
                 quality=quality,
                 output_dir=out_dir
             )
+            if self.downloads_list.GetItemCount() > 0:
+                self.downloads_list.Select(0)
+                self.downloads_list.Focus(0)
+            self.update_action_button()
 
     def _populate_existing_downloads(self):
+        self.downloads_list.DeleteAllItems()
+        self._item_row_map.clear()
         items = self.download_mgr.get_items()
         for item in items:
-            self._update_or_add_list_row(item)
+            if item.status in ("Queued", "Downloading"):
+                self._update_or_add_list_row(item)
+        if self.downloads_list.GetItemCount() > 0:
+            self.downloads_list.Select(0)
+            self.downloads_list.Focus(0)
         self.update_action_button()
 
     def _on_item_updated_async(self, item: DownloadItem):
@@ -399,6 +430,9 @@ class HighSpeedDownloaderDialog(wx.Dialog):
         if self.IsBeingDeleted():
             return
         self._update_or_add_list_row(item)
+        if self.downloads_list.GetSelectedItemCount() == 0 and self.downloads_list.GetItemCount() > 0:
+            self.downloads_list.Select(0)
+            self.downloads_list.Focus(0)
         self.update_action_button()
 
     def _update_or_add_list_row(self, item: DownloadItem):
@@ -417,7 +451,7 @@ class HighSpeedDownloaderDialog(wx.Dialog):
             row_idx = -1
 
         status_text = _(item.status)
-        pct_text = f"{item.progress:.1f}%"
+        pct_text = f"{int(round(item.progress))}%"
         speed_text = item.speed
         eta_text = item.eta
 
@@ -466,6 +500,9 @@ class HighSpeedDownloaderDialog(wx.Dialog):
         evt.Skip()
 
     def update_action_button(self):
+        has_active = self.download_mgr.has_active_downloads()
+        self.cancel_all_btn.Enable(has_active)
+
         row, item = self.get_selected_download_item()
         if not item:
             self.action_btn.SetLabel(_("&Cancel selected download"))
@@ -539,6 +576,7 @@ class HighSpeedDownloaderDialog(wx.Dialog):
         self.downloads_list.DeleteAllItems()
         self._item_row_map.clear()
         self.gauge.SetValue(0)
+        self.cancel_all_btn.Enable(False)
         self.update_action_button()
         ui.message(_("All downloads cancelled"))
 
@@ -570,5 +608,6 @@ class HighSpeedDownloaderDialog(wx.Dialog):
             pass
 
     def _destroy_dialog(self):
+        self.download_mgr.cleanup_non_active()
         HighSpeedDownloaderDialog._instance = None
         self.Destroy()

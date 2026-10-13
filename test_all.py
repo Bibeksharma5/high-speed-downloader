@@ -103,6 +103,9 @@ class TestUIComponents(unittest.TestCase):
         self.assertIsNotNone(dlg.cancel_all_btn)
         self.assertIsNotNone(dlg.close_btn)
 
+        # 1. cancel_all_btn must be disabled when no downloads are running
+        self.assertFalse(dlg.cancel_all_btn.IsEnabled())
+
         # Check format updates when download_as changes
         dlg.download_as_choice.SetSelection(0) # Video
         dlg.on_download_as_changed(None)
@@ -116,7 +119,28 @@ class TestUIComponents(unittest.TestCase):
         self.assertIn("mp3", audio_items)
         self.assertIn("wav", audio_items)
 
-        dlg.Destroy()
+        # 2. Add an item and verify first item is selected, cancel_all is enabled, percentage is whole number
+        item = dlg.download_mgr.add_download(title="Test Song", url="https://fake", format_ext="mp3")
+        item.progress = 45.6
+        dlg._safe_update_item(item)
+
+        self.assertTrue(dlg.cancel_all_btn.IsEnabled())
+        self.assertEqual(dlg.downloads_list.GetSelectedItemCount(), 1)
+        self.assertEqual(dlg.downloads_list.GetFirstSelected(), 0)
+        # Percentage must be whole number ("46%")
+        self.assertEqual(dlg.downloads_list.GetItem(0, 2).GetText(), "46%")
+
+        # 3. Mark completed, close dialog, reopen dialog -> completed video must NOT remain
+        item.cancel()
+        item.status = "Completed"
+        dlg._destroy_dialog()
+
+        # Reopen dialog
+        dlg2 = ui_dialogs.HighSpeedDownloaderDialog.open_dialog()
+        self.assertEqual(dlg2.downloads_list.GetItemCount(), 0)
+        self.assertFalse(dlg2.cancel_all_btn.IsEnabled())
+        dlg2.download_mgr.cancel_all()
+        dlg2._destroy_dialog()
 
     def test_playlist_dialog_creation(self):
         sample_entries = [
@@ -125,6 +149,12 @@ class TestUIComponents(unittest.TestCase):
             {"id": "3", "title": "Video 3", "url": "https://fake3"},
         ]
         dlg = ui_dialogs.PlaylistVideosDialog(None, "Sample Playlist", sample_entries)
+        # Check that list of checkboxes exists
+        self.assertIsNotNone(dlg.check_list)
+        self.assertEqual(dlg.check_list.GetCount(), 3)
+        for i in range(3):
+            self.assertTrue(dlg.check_list.IsChecked(i))  # All checked by default
+
         # All items checked by default
         selected = dlg.get_selected_entries()
         self.assertEqual(len(selected), 3)

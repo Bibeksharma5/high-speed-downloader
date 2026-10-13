@@ -157,10 +157,17 @@ class DownloadItem:
         self.status = "Cancelled"
         if self.process:
             try:
+                if self.process.stdout and not self.process.stdout.closed:
+                    self.process.stdout.close()
+            except Exception:
+                pass
+            try:
                 self.process.terminate()
-                time.sleep(0.1)
-                if self.process.poll() is None:
+                try:
+                    self.process.wait(timeout=0.2)
+                except (subprocess.TimeoutExpired, Exception):
                     self.process.kill()
+                    self.process.wait(timeout=0.2)
             except Exception:
                 pass
         self._cleanup_partials()
@@ -294,6 +301,11 @@ class DownloadManager:
                 self._executor = None
         if self.on_overall_progress:
             self.on_overall_progress(0.0)
+
+    def cleanup_non_active(self):
+        """Removes all downloads that are not actively Queued or Downloading."""
+        with self._lock:
+            self.items = [i for i in self.items if i.status in ("Queued", "Downloading")]
 
     def _worker_download(self, item: DownloadItem):
         if item.cancel_requested:
