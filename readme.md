@@ -31,8 +31,9 @@ In NVDA Preferences -> Settings (`NVDA+Ctrl+g`), open the **high speed downloade
 2. **Video downloading:** Select your preferred default video quality from the dropdown.
 3. **yt-dlp updates:** Click **Check for yt-dlp update** to check for and install newer versions of yt-dlp.
 
-## Author
+## Author & Homepage
 
 - **Author:** Bibek Sharma Dhakal
+- **Homepage:** https://github.com/Bibeksharma5/high-speed-downloader
 - **Minimum NVDA Version:** 2026.1
 - **Last Tested NVDA Version:** 2026.3
