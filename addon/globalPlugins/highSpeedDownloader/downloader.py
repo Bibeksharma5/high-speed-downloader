@@ -43,6 +43,22 @@ RE_ETA = re.compile(r"ETA\s+([0-9:]+)")
 RE_DEST = re.compile(r'Destination:\s*(.+)$')
 RE_MERGER = re.compile(r'Merging formats into "(.+?)"')
 
+def sanitize_folder_name(name: str) -> str:
+    """Sanitizes a string to be safely used as a Windows directory name."""
+    if not name:
+        return "Playlist"
+    cleaned = re.sub(r'[\\/*?:"<>|]', '_', name).strip('. ')
+    if not cleaned:
+        cleaned = "Playlist"
+    reserved = {
+        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4",
+        "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3",
+        "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+    }
+    if cleaned.upper() in reserved:
+        cleaned = f"_{cleaned}"
+    return cleaned
+
 def is_playlist_link(url: str) -> bool:
     """Quick heuristic check if a URL is likely a playlist."""
     if not url:
@@ -256,8 +272,18 @@ class DownloadManager:
         download_as: str = "Video",
         format_ext: str = "mp4",
         quality: str = "Best Available",
-        output_dir: str = ""
+        output_dir: str = "",
+        playlist_title: str = ""
     ) -> List[DownloadItem]:
+        base_dir = output_dir or config_mgr.get_output_folder()
+        if playlist_title:
+            folder_name = sanitize_folder_name(playlist_title)
+            final_dir = os.path.join(base_dir, folder_name)
+        else:
+            final_dir = base_dir
+
+        os.makedirs(final_dir, exist_ok=True)
+
         created = []
         with self._lock:
             for entry in entries:
@@ -268,7 +294,7 @@ class DownloadManager:
                     download_as=download_as,
                     format_ext=format_ext,
                     quality=quality,
-                    output_dir=output_dir
+                    output_dir=final_dir
                 )
                 self._next_id += 1
                 self.items.append(item)

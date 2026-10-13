@@ -376,8 +376,8 @@ class HighSpeedDownloaderDialog(wx.Dialog):
 
     def _on_url_inspected(self, info: dict, raw_url: str, download_as: str, format_ext: str, quality: str, out_dir: str):
         if info.get("is_playlist") and info.get("entries"):
-            # Show choose videos dialog
-            dlg = PlaylistVideosDialog(self, info.get("title", _("Playlist")), info["entries"])
+            playlist_title = info.get("title") or _("Playlist")
+            dlg = PlaylistVideosDialog(self, playlist_title, info["entries"])
             if dlg.ShowModal() == wx.ID_OK:
                 selected_entries = dlg.get_selected_entries()
                 if selected_entries:
@@ -386,7 +386,8 @@ class HighSpeedDownloaderDialog(wx.Dialog):
                         download_as=download_as,
                         format_ext=format_ext,
                         quality=quality,
-                        output_dir=out_dir
+                        output_dir=out_dir,
+                        playlist_title=playlist_title
                     )
                     if self.downloads_list.GetItemCount() > 0:
                         self.downloads_list.Select(0)

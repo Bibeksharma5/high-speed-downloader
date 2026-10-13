@@ -81,6 +81,35 @@ class TestDownloader(unittest.TestCase):
         self.assertEqual(len(mgr.get_items()), 0)
         self.assertFalse(mgr.has_active_downloads())
 
+    def test_sanitize_folder_name(self):
+        cleaned = downloader.sanitize_folder_name("My Favorite: Hits / 2026? *Best*")
+        self.assertNotIn(":", cleaned)
+        self.assertNotIn("/", cleaned)
+        self.assertNotIn("?", cleaned)
+        self.assertNotIn("*", cleaned)
+        self.assertEqual(downloader.sanitize_folder_name("..."), "Playlist")
+        self.assertEqual(downloader.sanitize_folder_name("CON"), "_CON")
+
+    def test_add_playlist_downloads_folder(self):
+        mgr = downloader.DownloadManager()
+        tmp_base = os.path.join(os.getcwd(), "test_output_temp")
+        items = mgr.add_playlist_downloads(
+            entries=[{"title": "Song 1", "url": "https://fake1"}],
+            output_dir=tmp_base,
+            playlist_title="Best of Rock"
+        )
+        self.assertEqual(len(items), 1)
+        expected_dir = os.path.join(tmp_base, "Best of Rock")
+        self.assertEqual(items[0].output_dir, expected_dir)
+        self.assertTrue(os.path.isdir(expected_dir))
+        mgr.cancel_all()
+        # Clean up temporary test directory
+        try:
+            import shutil
+            shutil.rmtree(tmp_base, ignore_errors=True)
+        except Exception:
+            pass
+
 
 class TestUIComponents(unittest.TestCase):
     @classmethod
