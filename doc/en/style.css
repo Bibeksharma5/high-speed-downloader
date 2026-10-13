@@ -1,0 +1,234 @@
+/* High Speed Downloader - Accessibility-first Documentation Stylesheet */
+:root {
+    --bg-color: #ffffff;
+    --text-color: #1a1a1a;
+    --primary-color: #0d47a1;
+    --primary-hover: #1565c0;
+    --secondary-color: #004d40;
+    --accent-color: #d84315;
+    --code-bg: #f4f6f8;
+    --code-border: #cfd8dc;
+    --border-color: #e0e0e0;
+    --card-bg: #f8fafc;
+    --card-border: #b0bec5;
+    --kbd-bg: #eceff1;
+    --kbd-border: #90a4ae;
+    --kbd-shadow: #78909c;
+    --table-header: #e3f2fd;
+    --table-alt: #fbfcfd;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #121212;
+        --text-color: #f1f1f1;
+        --primary-color: #82b1ff;
+        --primary-hover: #b388ff;
+        --secondary-color: #80cbc4;
+        --accent-color: #ffab91;
+        --code-bg: #1e1e1e;
+        --code-border: #37474f;
+        --border-color: #424242;
+        --card-bg: #1c2331;
+        --card-border: #455a64;
+        --kbd-bg: #263238;
+        --kbd-border: #546e7a;
+        --kbd-shadow: #102027;
+        --table-header: #1a237e;
+        --table-alt: #1e2530;
+    }
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 20px 48px;
+    font-size: 16px;
+}
+
+header {
+    border-bottom: 3px solid var(--primary-color);
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+}
+
+h1 {
+    color: var(--primary-color);
+    font-size: 2.2rem;
+    line-height: 1.25;
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--secondary-color);
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 0.95rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 10px 16px;
+    border-radius: 6px;
+}
+
+.meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.meta-label {
+    font-weight: bold;
+}
+
+nav.toc {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 28px 0;
+}
+
+nav.toc h2 {
+    margin-top: 0;
+    font-size: 1.3rem;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+nav.toc ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+nav.toc li {
+    margin: 6px 0;
+}
+
+h2 {
+    color: var(--primary-color);
+    font-size: 1.6rem;
+    margin-top: 40px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 6px;
+}
+
+h3 {
+    color: var(--secondary-color);
+    font-size: 1.25rem;
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
+p, ul, ol {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+li {
+    margin-bottom: 6px;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+a:hover, a:focus {
+    color: var(--primary-hover);
+    text-decoration-thickness: 2px;
+}
+
+kbd {
+    display: inline-block;
+    padding: 3px 7px;
+    font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 0.85em;
+    font-weight: bold;
+    line-height: 1;
+    color: var(--text-color);
+    background-color: var(--kbd-bg);
+    border: 1px solid var(--kbd-border);
+    border-bottom: 2px solid var(--kbd-shadow);
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+code {
+    font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 0.9em;
+    padding: 2px 6px;
+    background-color: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 4px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.95rem;
+}
+
+th, td {
+    border: 1px solid var(--border-color);
+    padding: 10px 14px;
+    text-align: left;
+}
+
+th {
+    background-color: var(--table-header);
+    font-weight: 600;
+}
+
+tr:nth-child(even) td {
+    background-color: var(--table-alt);
+}
+
+.notice-box {
+    background-color: var(--card-bg);
+    border-left: 5px solid var(--primary-color);
+    padding: 14px 18px;
+    margin: 20px 0;
+    border-radius: 0 6px 6px 0;
+}
+
+.notice-box.tip {
+    border-left-color: var(--secondary-color);
+}
+
+.notice-box.warning {
+    border-left-color: var(--accent-color);
+}
+
+.notice-box p:last-child {
+    margin-bottom: 0;
+}
+
+footer {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-color);
+    text-align: center;
+}

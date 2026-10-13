@@ -132,8 +132,11 @@ class TestUIComponents(unittest.TestCase):
         self.assertIsNotNone(dlg.cancel_all_btn)
         self.assertIsNotNone(dlg.close_btn)
 
-        # 1. cancel_all_btn must be disabled when no downloads are running
+        # 1. cancel_all_btn and gauge must be disabled and not focusable when no downloads are running
         self.assertFalse(dlg.cancel_all_btn.IsEnabled())
+        self.assertFalse(dlg.gauge.IsEnabled())
+        self.assertFalse(dlg.gauge.AcceptsFocus())
+        self.assertFalse(dlg.gauge.AcceptsFocusFromKeyboard())
 
         # Check format updates when download_as changes
         dlg.download_as_choice.SetSelection(0) # Video
@@ -148,18 +151,21 @@ class TestUIComponents(unittest.TestCase):
         self.assertIn("mp3", audio_items)
         self.assertIn("wav", audio_items)
 
-        # 2. Add an item and verify first item is selected, cancel_all is enabled, percentage is whole number
+        # 2. Add an item and verify first item is selected, cancel_all and gauge are enabled, gauge is focusable, percentage is whole number
         item = dlg.download_mgr.add_download(title="Test Song", url="https://fake", format_ext="mp3")
         item.progress = 45.6
         dlg._safe_update_item(item)
 
         self.assertTrue(dlg.cancel_all_btn.IsEnabled())
+        self.assertTrue(dlg.gauge.IsEnabled())
+        self.assertTrue(dlg.gauge.AcceptsFocus())
+        self.assertTrue(dlg.gauge.AcceptsFocusFromKeyboard())
         self.assertEqual(dlg.downloads_list.GetSelectedItemCount(), 1)
         self.assertEqual(dlg.downloads_list.GetFirstSelected(), 0)
         # Percentage must be whole number ("46%")
         self.assertEqual(dlg.downloads_list.GetItem(0, 2).GetText(), "46%")
 
-        # 3. Mark completed, close dialog, reopen dialog -> completed video must NOT remain
+        # 3. Mark completed, close dialog, reopen dialog -> completed video must NOT remain, gauge disabled
         item.cancel()
         item.status = "Completed"
         dlg._destroy_dialog()
@@ -168,6 +174,8 @@ class TestUIComponents(unittest.TestCase):
         dlg2 = ui_dialogs.HighSpeedDownloaderDialog.open_dialog()
         self.assertEqual(dlg2.downloads_list.GetItemCount(), 0)
         self.assertFalse(dlg2.cancel_all_btn.IsEnabled())
+        self.assertFalse(dlg2.gauge.IsEnabled())
+        self.assertFalse(dlg2.gauge.AcceptsFocus())
         dlg2.download_mgr.cancel_all()
         dlg2._destroy_dialog()
 
@@ -228,5 +236,27 @@ class TestUIComponents(unittest.TestCase):
         plugin.terminate()
 
 
+class TestDocumentationAndManifest(unittest.TestCase):
+    def test_documentation_files_exist(self):
+        root = Path(__file__).resolve().parent
+        doc_html = root / "addon" / "doc" / "en" / "readme.html"
+        doc_css = root / "addon" / "doc" / "style.css"
+        self.assertTrue(doc_html.is_file(), f"readme.html missing at {doc_html}")
+        self.assertTrue(doc_css.is_file(), f"style.css missing at {doc_css}")
+        self.assertGreater(doc_html.stat().st_size, 500)
+
+    def test_manifest_metadata(self):
+        root = Path(__file__).resolve().parent
+        import build_addon
+        manifest_path = build_addon.generate_manifest(root)
+        self.assertTrue(manifest_path.is_file())
+        text = manifest_path.read_text(encoding="utf-8")
+        self.assertIn("name = HighSpeedDownloader", text)
+        self.assertIn("docFileName = readme.html", text)
+        self.assertIn("Fast & Accessible Video and Audio Downloader", text)
+        self.assertIn("https://github.com/Bibeksharma5/high-speed-downloader", text)
+
+
 if __name__ == "__main__":
     unittest.main()
+

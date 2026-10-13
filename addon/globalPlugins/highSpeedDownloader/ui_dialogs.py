@@ -176,6 +176,33 @@ class ActiveDownloadCloseDialog(wx.Dialog):
         self.CentreOnParent()
 
 
+class FocusableGauge(wx.Gauge):
+    """
+    A wx.Gauge that can accept keyboard focus when downloads are active.
+    When disabled or when no downloads are active, it cannot receive focus.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.can_focus = False
+        self.Bind(wx.EVT_KEY_DOWN, self._on_key_down)
+
+    def set_can_focus(self, can_focus: bool):
+        self.can_focus = can_focus
+
+    def AcceptsFocus(self):
+        return self.can_focus and self.IsEnabled()
+
+    def AcceptsFocusFromKeyboard(self):
+        return self.can_focus and self.IsEnabled()
+
+    def _on_key_down(self, evt):
+        if evt.GetKeyCode() == wx.WXK_TAB:
+            flags = wx.NavigationKeyEvent.IsForward if not evt.ShiftDown() else wx.NavigationKeyEvent.IsBackward
+            self.Navigate(flags)
+            return
+        evt.Skip()
+
+
 class HighSpeedDownloaderDialog(wx.Dialog):
     """
     Main User Interface for High Speed Downloader NVDA Add-on.
@@ -295,8 +322,12 @@ class HighSpeedDownloaderDialog(wx.Dialog):
 
         main_sizer.Add(self.downloads_list, proportion=1, flag=wx.LEFT | wx.RIGHT | wx.EXPAND, border=10)
 
-        # 6. Gauge progress bar updated real-time
-        self.gauge = wx.Gauge(self, range=100, size=(-1, 20))
+        # 6. Gauge progress bar updated real-time (focusable when active, disabled when idle)
+        self.gauge = FocusableGauge(self, range=100, size=(-1, 20), name=_("Download progress"))
+        self.gauge.SetLabel(_("Download progress"))
+        has_active = self.download_mgr.has_active_downloads()
+        self.gauge.Enable(has_active)
+        self.gauge.set_can_focus(has_active)
         main_sizer.Add(self.gauge, flag=wx.ALL | wx.EXPAND, border=10)
 
         # 7. Action button: Cancel selected download OR Play completed file
@@ -477,6 +508,10 @@ class HighSpeedDownloaderDialog(wx.Dialog):
         val = int(round(percent))
         val = min(100, max(0, val))
         self.gauge.SetValue(val)
+        has_active = self.download_mgr.has_active_downloads()
+        if self.gauge.IsEnabled() != has_active:
+            self.gauge.Enable(has_active)
+            self.gauge.set_can_focus(has_active)
 
     def _on_all_completed_async(self):
         wx.CallAfter(self._safe_all_completed)
@@ -485,6 +520,8 @@ class HighSpeedDownloaderDialog(wx.Dialog):
         parent = None
         if not self.IsBeingDeleted():
             self.gauge.SetValue(100)
+            self.gauge.Enable(False)
+            self.gauge.set_can_focus(False)
             self.cancel_all_btn.Enable(False)
             self.update_action_button()
             parent = self
@@ -518,6 +555,8 @@ class HighSpeedDownloaderDialog(wx.Dialog):
     def update_action_button(self):
         has_active = self.download_mgr.has_active_downloads()
         self.cancel_all_btn.Enable(has_active)
+        self.gauge.Enable(has_active)
+        self.gauge.set_can_focus(has_active)
 
         row, item = self.get_selected_download_item()
         if not item:
@@ -592,6 +631,8 @@ class HighSpeedDownloaderDialog(wx.Dialog):
         self.downloads_list.DeleteAllItems()
         self._item_row_map.clear()
         self.gauge.SetValue(0)
+        self.gauge.Enable(False)
+        self.gauge.set_can_focus(False)
         self.cancel_all_btn.Enable(False)
         self.update_action_button()
         ui.message(_("All downloads cancelled"))

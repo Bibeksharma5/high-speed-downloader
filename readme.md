@@ -8,7 +8,7 @@
 - **Video & Audio Formats:** Download as video (`mp4`, `mkv`, `webm`, `avi`) or audio (`mp3`, `m4a`, `opus`, `wav`, `flac`, `aac`).
 - **Flexible Video Qualities:** Choose from Best Available, 2160p (4K), 1440p (2K), 1080p, 720p, 480p, 360p, or 240p in NVDA settings.
 - **Intelligent Playlist Support:** Automatically detects playlist links and displays a list of checkboxes with all videos in the playlist (all checked by default). Download multiple videos in parallel with bounded multi-threading.
-- **Real-Time Progress:** Dynamic progress bar (gauge) and detailed download list showing title, status, percentage, download speed, and ETA.
+- **Real-Time Progress & Focusable Gauge:** Focusable real-time progress bar (gauge) that can be tabbed to with screen readers while downloads are running (disabled when idle), and a detailed download list showing title, status, whole-number progress percentage, download speed, and ETA.
 - **Convenient Controls:**
   - Cancel any selected active download or cancel all downloads.
   - Contextual Play button: When focusing on a completed download, the Cancel button dynamically turns into a **Play** button to immediately open the file in your default media player.

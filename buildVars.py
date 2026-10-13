@@ -17,10 +17,10 @@ addon_info = AddonInfo(
 	# Add-on summary/title, usually the user visible name of the add-on
 	# Translators: Summary/title for this add-on
 	# to be shown on installation and add-on information found in add-on store
-	addon_summary=_("high speed downloader"),
+	addon_summary=_("High Speed Downloader: Fast & Accessible Video and Audio Downloader"),
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-on store
-	addon_description=_("""An accessible video downloader capable of downloading the videos and playlist in high speed"""),
+	addon_description=_("""High Speed Downloader is a blazing-fast, fully accessible NVDA add-on designed for high-performance downloading of YouTube videos, audio tracks, and full playlists. Powered by yt-dlp with multi-connection chunk acceleration, it offers comprehensive quality selections, multi-format conversion, playlist batch processing, and full screen reader integration."""),
 	# version
 	addon_version="1.0",
 	# Brief changelog for this version
